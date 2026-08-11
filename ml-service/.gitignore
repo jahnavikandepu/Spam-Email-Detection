@@ -1,0 +1,21 @@
+# Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# PyCharm / VS Code settings
+.vscode/
+.idea/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
