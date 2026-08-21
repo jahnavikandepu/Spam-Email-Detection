@@ -44,7 +44,13 @@ export const getHistory = async (req, res, next) => {
       data: records,
     });
   } catch (error) {
-    next(error);
+    console.warn('[MongoDB Warning] getHistory failed:', error.message);
+    return res.status(200).json({
+      success: true,
+      count: 0,
+      data: [],
+      message: 'Database unavailable',
+    });
   }
 };
 
@@ -55,8 +61,14 @@ export const getHistory = async (req, res, next) => {
  */
 export const getHistoryById = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    if (!Prediction.db || Prediction.db.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected',
+      });
+    }
 
+    const { id } = req.params;
     const record = await Prediction.findById(id);
 
     if (!record) {
@@ -77,7 +89,11 @@ export const getHistoryById = async (req, res, next) => {
         message: 'Invalid history record ID format',
       });
     }
-    next(error);
+    console.warn('[MongoDB Warning] getHistoryById failed:', error.message);
+    return res.status(503).json({
+      success: false,
+      message: 'Database operation failed',
+    });
   }
 };
 
@@ -88,6 +104,13 @@ export const getHistoryById = async (req, res, next) => {
  */
 export const deleteHistory = async (req, res, next) => {
   try {
+    if (!Prediction.db || Prediction.db.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        message: 'Database not connected',
+      });
+    }
+
     await Prediction.deleteMany({});
 
     return res.status(200).json({
@@ -95,7 +118,11 @@ export const deleteHistory = async (req, res, next) => {
       message: 'Prediction history cleared successfully',
     });
   } catch (error) {
-    next(error);
+    console.warn('[MongoDB Warning] deleteHistory failed:', error.message);
+    return res.status(200).json({
+      success: true,
+      message: 'History clear skipped (Database unavailable)',
+    });
   }
 };
 
@@ -106,8 +133,14 @@ export const deleteHistory = async (req, res, next) => {
  */
 export const deleteHistoryItem = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    if (!Prediction.db || Prediction.db.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected',
+      });
+    }
 
+    const { id } = req.params;
     const record = await Prediction.findByIdAndDelete(id);
 
     if (!record) {
@@ -128,6 +161,10 @@ export const deleteHistoryItem = async (req, res, next) => {
         message: 'Invalid history record ID format',
       });
     }
-    next(error);
+    console.warn('[MongoDB Warning] deleteHistoryItem failed:', error.message);
+    return res.status(503).json({
+      success: false,
+      message: 'Database operation failed',
+    });
   }
 };

@@ -87,11 +87,13 @@ def main():
         text = " ".join(sys.argv[1:])
     else:
         try:
+            if hasattr(sys.stdin, 'reconfigure'):
+                sys.stdin.reconfigure(encoding='utf-8', errors='replace')
             text = sys.stdin.read()
         except Exception as e:
             sys.stderr.write(f"Error reading stdin: {e}\n")
 
-    if not text:
+    if not text or not text.strip():
         sys.stderr.write("No input text provided to predict.py\n")
         result = {"prediction": "not_spam", "confidence": 0.50}
     else:
@@ -104,3 +106,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,8 +1,8 @@
 import Prediction from '../models/Prediction.js';
-import { getMlPrediction } from '../services/mlService.js';
+import { getMlPrediction } from '../services/pythonMlService.js';
 
 /**
- * @desc    Predict spam vs not_spam for email content and save result to database
+ * @desc    Predict spam vs not_spam for email content using Python predict.py script
  * @route   POST /api/predict
  * @access  Public
  */
@@ -10,7 +10,7 @@ export const predictEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
 
-    // 1. Validation: check missing, empty, or whitespace-only strings
+    // 1. Validation: check missing, non-string, or empty/whitespace-only strings
     if (!email || typeof email !== 'string' || !email.trim()) {
       return res.status(400).json({
         success: false,
@@ -20,15 +20,15 @@ export const predictEmail = async (req, res, next) => {
 
     const trimmedContent = email.trim();
 
-    // 2. Call Python FastAPI ML Service
+    // 2. Call Python ML Service via child_process spawn
     const mlResult = await getMlPrediction(trimmedContent);
 
-    // 3. Format email preview for history listing
+    // 3. Format email preview for optional history listing
     const emailPreview = trimmedContent.length > 120
       ? trimmedContent.substring(0, 120) + '...'
       : trimmedContent;
 
-    // 4. Save successful prediction record to MongoDB (if database is connected)
+    // 4. Save prediction record to MongoDB if connected (isolated DB operations)
     let savedRecord = null;
     if (Prediction.db && Prediction.db.readyState === 1) {
       try {
@@ -40,10 +40,10 @@ export const predictEmail = async (req, res, next) => {
           createdAt: new Date(),
         });
       } catch (dbErr) {
-        console.error('[MongoDB Error] Could not save prediction record:', dbErr.message);
+        console.warn('[MongoDB Warning] Could not save prediction record:', dbErr.message);
       }
     } else {
-      console.warn('[MongoDB Warning] Database not connected. Skipping prediction storage.');
+      console.warn('[MongoDB Warning] Database not connected. Skipping prediction history storage.');
     }
 
     // 5. Return structured JSON response to React frontend
