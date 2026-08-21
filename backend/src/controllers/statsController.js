@@ -7,12 +7,24 @@ import Prediction from '../models/Prediction.js';
  */
 export const getStats = async (req, res, next) => {
   try {
+    if (!Prediction.db || Prediction.db.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          totalEmails: 0,
+          spamEmails: 0,
+          notSpamEmails: 0,
+          spamPercentage: 0,
+        },
+      });
+    }
+
     const totalEmails = await Prediction.countDocuments();
     const spamEmails = await Prediction.countDocuments({ prediction: 'spam' });
     const notSpamEmails = await Prediction.countDocuments({ prediction: 'not_spam' });
 
-    const spamPercentage = totalEmails > 0 
-      ? Number(((spamEmails / totalEmails) * 100).toFixed(1)) 
+    const spamPercentage = totalEmails > 0
+      ? Number(((spamEmails / totalEmails) * 100).toFixed(1))
       : 0;
 
     return res.status(200).json({

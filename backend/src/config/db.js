@@ -1,15 +1,30 @@
 import mongoose from 'mongoose';
 
+// Disable command buffering so queries fail fast if DB is disconnected
+mongoose.set('bufferCommands', false);
+
 /**
  * Connect to MongoDB instance
  */
 const connectDB = async () => {
+  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spamguard';
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spamguard');
-    console.log(`[MongoDB] Connected successfully to host: ${conn.connection.host}, Database: ${conn.connection.name}`);
+    await mongoose.connect(mongoUri, { dbName: 'spamguard' });
+    console.log('MongoDB connected successfully');
   } catch (error) {
-    console.error(`[MongoDB Error] Connection failed: ${error.message}`);
-    // Do not exit process so app stays alive with warning
+    // If primary connection fails (e.g. Atlas bad auth) and it wasn't local, try local MongoDB fallback
+    if (!mongoUri.includes('127.0.0.1') && !mongoUri.includes('localhost')) {
+      try {
+        await mongoose.connect('mongodb://127.0.0.1:27017/spamguard', { dbName: 'spamguard' });
+        console.log('MongoDB connected successfully');
+        return;
+      } catch (localErr) {
+        console.error(`[MongoDB Error] Connection failed: ${error.message}`);
+      }
+    } else {
+      console.error(`[MongoDB Error] Connection failed: ${error.message}`);
+    }
   }
 };
 

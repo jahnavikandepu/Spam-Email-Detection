@@ -13,14 +13,11 @@ const predictionSchema = new mongoose.Schema({
   },
   prediction: {
     type: String,
-    enum: ['spam', 'not_spam'],
     required: [true, 'Prediction result is required'],
   },
   confidence: {
     type: Number,
     required: [true, 'Confidence score is required'],
-    min: 0,
-    max: 1,
   },
   createdAt: {
     type: Date,
@@ -39,6 +36,6 @@ predictionSchema.pre('validate', function (next) {
   next();
 });
 
-const Prediction = mongoose.model('Prediction', predictionSchema);
+const Prediction = mongoose.model('Prediction', predictionSchema, 'predictions');
 
 export default Prediction;

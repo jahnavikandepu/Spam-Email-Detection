@@ -24,21 +24,26 @@ export const predictEmail = async (req, res, next) => {
     const mlResult = await getMlPrediction(trimmedContent);
 
     // 3. Format email preview for history listing
-    const emailPreview = trimmedContent.length > 120 
-      ? trimmedContent.substring(0, 120) + '...' 
+    const emailPreview = trimmedContent.length > 120
+      ? trimmedContent.substring(0, 120) + '...'
       : trimmedContent;
 
-    // 4. Save prediction record to MongoDB
+    // 4. Save successful prediction record to MongoDB (if database is connected)
     let savedRecord = null;
-    try {
-      savedRecord = await Prediction.create({
-        emailContent: trimmedContent,
-        emailPreview,
-        prediction: mlResult.prediction,
-        confidence: mlResult.confidence,
-      });
-    } catch (dbErr) {
-      console.warn('[MongoDB Warning] Could not persist prediction record:', dbErr.message);
+    if (Prediction.db && Prediction.db.readyState === 1) {
+      try {
+        savedRecord = await Prediction.create({
+          emailContent: trimmedContent,
+          emailPreview,
+          prediction: mlResult.prediction,
+          confidence: mlResult.confidence,
+          createdAt: new Date(),
+        });
+      } catch (dbErr) {
+        console.error('[MongoDB Error] Could not save prediction record:', dbErr.message);
+      }
+    } else {
+      console.warn('[MongoDB Warning] Database not connected. Skipping prediction storage.');
     }
 
     // 5. Return structured JSON response to React frontend

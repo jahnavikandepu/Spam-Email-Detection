@@ -7,6 +7,15 @@ import Prediction from '../models/Prediction.js';
  */
 export const getHistory = async (req, res, next) => {
   try {
+    if (!Prediction.db || Prediction.db.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+        message: 'Database not connected',
+      });
+    }
+
     const { search, prediction } = req.query;
 
     // Build Mongoose query object
