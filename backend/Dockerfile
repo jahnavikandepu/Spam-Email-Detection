@@ -1,24 +1,22 @@
-# Use official Node.js 20 Debian slim image
 FROM node:20-slim
 
-# Install Python 3 and pip
+# Install Python and pip
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy requirements.txt and install Python libraries
-COPY ../requirements.txt ./requirements.txt
-RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt || pip3 install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 
-# Copy package files and install Node packages
+# Install Node dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --omit=dev
 
-# Copy backend files (excluding dataset & train.py via .dockerignore)
+# Copy backend application
 COPY . .
 
 ENV PORT=5000
