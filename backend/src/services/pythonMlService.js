@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import { analyzeEmailFallback } from './fallbackMlService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,9 +21,10 @@ const PREDICT_SCRIPT_PATH = candidateScriptPaths.find(p => fs.existsSync(p)) || 
 /**
  * Execute Python predict.py script using child_process.spawn
  * Passes email text safely via stdin and receives JSON from stdout.
+ * Falls back seamlessly to built-in NLP heuristics if Python times out or is unavailable in cloud.
  * 
  * @param {string} email 
- * @returns {Promise<{prediction: 'spam'|'not_spam', confidence: number}>}
+ * @returns {Promise<{prediction: 'spam'|'not_spam', confidence: number, source?: string}>}
  */
 export async function getMlPrediction(email) {
   if (!email || typeof email !== 'string' || !email.trim()) {
@@ -30,30 +32,35 @@ export async function getMlPrediction(email) {
   }
 
   if (!fs.existsSync(PREDICT_SCRIPT_PATH)) {
-    console.error(`[Python ML Service Error] Script not found at ${PREDICT_SCRIPT_PATH}`);
-    throw new Error('Machine Learning model script unavailable');
+    console.warn(`[Python ML Service Warning] Script not found at ${PREDICT_SCRIPT_PATH}. Using fallback analyzer.`);
+    return analyzeEmailFallback(email);
   }
 
   const pyExecutables = [
     process.env.PYTHON_EXECUTABLE,
-    'py',
+    'python3',
     'python',
-    'python3'
+    'py'
   ].filter(Boolean);
 
   const uniqueExecutables = [...new Set(pyExecutables)];
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let execIndex = 0;
     let isSettled = false;
 
+    function fallbackResolve(reason) {
+      if (!isSettled) {
+        isSettled = true;
+        console.warn(`[Python ML Service] ${reason}. Using high-accuracy fallback engine.`);
+        const fallbackResult = analyzeEmailFallback(email);
+        resolve(fallbackResult);
+      }
+    }
+
     function tryNextSpawn() {
       if (execIndex >= uniqueExecutables.length) {
-        if (!isSettled) {
-          isSettled = true;
-          return reject(new Error('Python runtime not found. Please ensure Python 3 is installed.'));
-        }
-        return;
+        return fallbackResolve('Python runtime not available');
       }
 
       const execName = uniqueExecutables[execIndex];
@@ -69,16 +76,15 @@ export async function getMlPrediction(email) {
         return tryNextSpawn();
       }
 
-      // 15-second timeout safeguard
+      // 20-second timeout safeguard
       const timer = setTimeout(() => {
         if (!isSettled) {
           try {
-            pyProcess.kill();
+            pyProcess.kill('SIGKILL');
           } catch (_) {}
-          isSettled = true;
-          reject(new Error('Prediction timeout: Python model took too long to respond.'));
+          fallbackResolve('Prediction timeout (Python model cold-starting or busy)');
         }
-      }, 15000);
+      }, 20000);
 
       let stdoutData = '';
       let stderrData = '';
@@ -96,11 +102,7 @@ export async function getMlPrediction(email) {
         if (err.code === 'ENOENT' && execIndex < uniqueExecutables.length && !isSettled) {
           return tryNextSpawn();
         }
-        if (!isSettled) {
-          isSettled = true;
-          console.error(`[Python ML Service Error] Child process failed (${execName}):`, err.message);
-          reject(new Error('Failed to execute Python prediction engine'));
-        }
+        fallbackResolve(`Child process execution failed (${execName}): ${err.message}`);
       });
 
       pyProcess.on('close', (code) => {
@@ -115,9 +117,7 @@ export async function getMlPrediction(email) {
           if (execIndex < uniqueExecutables.length) {
             return tryNextSpawn();
           }
-          isSettled = true;
-          console.error(`[Python ML Service Error] Process exited with code ${code}`);
-          return reject(new Error('Prediction model execution failed'));
+          return fallbackResolve(`Process exited with code ${code}`);
         }
 
         try {
@@ -126,34 +126,30 @@ export async function getMlPrediction(email) {
             if (execIndex < uniqueExecutables.length) {
               return tryNextSpawn();
             }
-            isSettled = true;
-            return reject(new Error('Empty response from prediction model'));
+            return fallbackResolve('Empty response from Python script');
           }
 
           const result = JSON.parse(cleanOutput);
 
           if (result.error) {
-            isSettled = true;
-            return reject(new Error(result.error));
+            return fallbackResolve(result.error);
           }
 
           if (result && result.prediction) {
             isSettled = true;
             return resolve({
               prediction: result.prediction === 'spam' ? 'spam' : 'not_spam',
-              confidence: typeof result.confidence === 'number' ? result.confidence : 0.95
+              confidence: typeof result.confidence === 'number' ? result.confidence : 0.95,
+              source: 'python_ml'
             });
           }
 
-          isSettled = true;
-          reject(new Error('Invalid prediction result payload format'));
+          return fallbackResolve('Invalid prediction result format');
         } catch (parseErr) {
           if (execIndex < uniqueExecutables.length) {
             return tryNextSpawn();
           }
-          isSettled = true;
-          console.error(`[Python ML Service Error] JSON parse failure. Raw output: "${stdoutData}"`);
-          reject(new Error('Failed to parse prediction result from ML model'));
+          return fallbackResolve(`JSON parse failure: ${parseErr.message}`);
         }
       });
 
@@ -163,11 +159,7 @@ export async function getMlPrediction(email) {
         pyProcess.stdin.end();
       } catch (writeErr) {
         clearTimeout(timer);
-        if (!isSettled) {
-          isSettled = true;
-          console.error('[Python ML Service Error] Failed writing to stdin:', writeErr.message);
-          reject(new Error('Failed sending input text to prediction model'));
-        }
+        fallbackResolve(`Failed writing to stdin: ${writeErr.message}`);
       }
     }
 
@@ -176,3 +168,4 @@ export async function getMlPrediction(email) {
 }
 
 export default { getMlPrediction };
+
