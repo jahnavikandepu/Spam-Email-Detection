@@ -36,28 +36,49 @@ export async function getMlPrediction(email) {
 
   const pyExecutables = [
     process.env.PYTHON_EXECUTABLE,
-    'python3',
+    'py',
     'python',
-    'py'
+    'python3'
   ].filter(Boolean);
 
   const uniqueExecutables = [...new Set(pyExecutables)];
 
   return new Promise((resolve, reject) => {
     let execIndex = 0;
+    let isSettled = false;
 
     function tryNextSpawn() {
       if (execIndex >= uniqueExecutables.length) {
-        return reject(new Error('Python runtime not found. Please ensure Python 3 is installed.'));
+        if (!isSettled) {
+          isSettled = true;
+          return reject(new Error('Python runtime not found. Please ensure Python 3 is installed.'));
+        }
+        return;
       }
 
       const execName = uniqueExecutables[execIndex];
       execIndex++;
 
-      const pyProcess = spawn(execName, [PREDICT_SCRIPT_PATH], {
-        windowsHide: true,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      let pyProcess;
+      try {
+        pyProcess = spawn(execName, [PREDICT_SCRIPT_PATH], {
+          windowsHide: true,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+      } catch (err) {
+        return tryNextSpawn();
+      }
+
+      // 15-second timeout safeguard
+      const timer = setTimeout(() => {
+        if (!isSettled) {
+          try {
+            pyProcess.kill();
+          } catch (_) {}
+          isSettled = true;
+          reject(new Error('Prediction timeout: Python model took too long to respond.'));
+        }
+      }, 15000);
 
       let stdoutData = '';
       let stderrData = '';
@@ -71,19 +92,30 @@ export async function getMlPrediction(email) {
       });
 
       pyProcess.on('error', (err) => {
-        if (err.code === 'ENOENT' && execIndex < uniqueExecutables.length) {
+        clearTimeout(timer);
+        if (err.code === 'ENOENT' && execIndex < uniqueExecutables.length && !isSettled) {
           return tryNextSpawn();
         }
-        console.error(`[Python ML Service Error] Child process failed (${execName}):`, err.message);
-        reject(new Error('Failed to execute Python prediction engine'));
+        if (!isSettled) {
+          isSettled = true;
+          console.error(`[Python ML Service Error] Child process failed (${execName}):`, err.message);
+          reject(new Error('Failed to execute Python prediction engine'));
+        }
       });
 
       pyProcess.on('close', (code) => {
+        clearTimeout(timer);
+        if (isSettled) return;
+
         if (stderrData && stderrData.trim()) {
           console.warn(`[Python ML Service stderr]: ${stderrData.trim()}`);
         }
 
         if (code !== 0 && !stdoutData.trim()) {
+          if (execIndex < uniqueExecutables.length) {
+            return tryNextSpawn();
+          }
+          isSettled = true;
           console.error(`[Python ML Service Error] Process exited with code ${code}`);
           return reject(new Error('Prediction model execution failed'));
         }
@@ -91,24 +123,35 @@ export async function getMlPrediction(email) {
         try {
           const cleanOutput = stdoutData.trim();
           if (!cleanOutput) {
+            if (execIndex < uniqueExecutables.length) {
+              return tryNextSpawn();
+            }
+            isSettled = true;
             return reject(new Error('Empty response from prediction model'));
           }
 
           const result = JSON.parse(cleanOutput);
 
           if (result.error) {
+            isSettled = true;
             return reject(new Error(result.error));
           }
 
           if (result && result.prediction) {
+            isSettled = true;
             return resolve({
               prediction: result.prediction === 'spam' ? 'spam' : 'not_spam',
               confidence: typeof result.confidence === 'number' ? result.confidence : 0.95
             });
           }
 
+          isSettled = true;
           reject(new Error('Invalid prediction result payload format'));
         } catch (parseErr) {
+          if (execIndex < uniqueExecutables.length) {
+            return tryNextSpawn();
+          }
+          isSettled = true;
           console.error(`[Python ML Service Error] JSON parse failure. Raw output: "${stdoutData}"`);
           reject(new Error('Failed to parse prediction result from ML model'));
         }
@@ -119,8 +162,12 @@ export async function getMlPrediction(email) {
         pyProcess.stdin.write(email, 'utf-8');
         pyProcess.stdin.end();
       } catch (writeErr) {
-        console.error('[Python ML Service Error] Failed writing to stdin:', writeErr.message);
-        reject(new Error('Failed sending input text to prediction model'));
+        clearTimeout(timer);
+        if (!isSettled) {
+          isSettled = true;
+          console.error('[Python ML Service Error] Failed writing to stdin:', writeErr.message);
+          reject(new Error('Failed sending input text to prediction model'));
+        }
       }
     }
 

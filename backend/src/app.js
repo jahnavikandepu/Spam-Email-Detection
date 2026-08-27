@@ -11,10 +11,22 @@ dotenv.config();
 
 const app = express();
 
-// Enable CORS for frontend CLIENT_URL
+// Enable CORS for frontend CLIENT_URL and local dev servers
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 app.use(cors({
-  origin: [clientUrl, 'http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (
+      origin === clientUrl ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.endsWith('.vercel.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive for development
+  },
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));

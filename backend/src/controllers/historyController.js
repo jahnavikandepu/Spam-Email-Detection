@@ -1,4 +1,9 @@
-import Prediction from '../models/Prediction.js';
+import {
+  getPredictionRecords,
+  getPredictionRecordById,
+  clearAllPredictionRecords,
+  deletePredictionRecordById,
+} from '../services/historyStore.js';
 
 /**
  * @desc    Get all prediction history records with optional search & prediction filters
@@ -7,36 +12,9 @@ import Prediction from '../models/Prediction.js';
  */
 export const getHistory = async (req, res, next) => {
   try {
-    if (!Prediction.db || Prediction.db.readyState !== 1) {
-      return res.status(200).json({
-        success: true,
-        count: 0,
-        data: [],
-        message: 'Database not connected',
-      });
-    }
-
     const { search, prediction } = req.query;
 
-    // Build Mongoose query object
-    const query = {};
-
-    if (prediction && ['spam', 'not_spam'].includes(prediction.toLowerCase())) {
-      query.prediction = prediction.toLowerCase();
-    }
-
-    if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
-      query.$or = [
-        { emailContent: searchRegex },
-        { emailPreview: searchRegex }
-      ];
-    }
-
-    // Query database sorted by newest first
-    const records = await Prediction.find(query)
-      .sort({ createdAt: -1 })
-      .select('_id emailPreview prediction confidence createdAt emailContent');
+    const records = await getPredictionRecords({ search, prediction });
 
     return res.status(200).json({
       success: true,
@@ -44,12 +22,12 @@ export const getHistory = async (req, res, next) => {
       data: records,
     });
   } catch (error) {
-    console.warn('[MongoDB Warning] getHistory failed:', error.message);
+    console.warn('[History Controller Warning] getHistory error:', error.message);
     return res.status(200).json({
       success: true,
       count: 0,
       data: [],
-      message: 'Database unavailable',
+      message: error.message,
     });
   }
 };
@@ -61,15 +39,8 @@ export const getHistory = async (req, res, next) => {
  */
 export const getHistoryById = async (req, res, next) => {
   try {
-    if (!Prediction.db || Prediction.db.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        message: 'Database not connected',
-      });
-    }
-
     const { id } = req.params;
-    const record = await Prediction.findById(id);
+    const record = await getPredictionRecordById(id);
 
     if (!record) {
       return res.status(404).json({
@@ -83,16 +54,10 @@ export const getHistoryById = async (req, res, next) => {
       data: record,
     });
   } catch (error) {
-    if (error.kind === 'ObjectId') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid history record ID format',
-      });
-    }
-    console.warn('[MongoDB Warning] getHistoryById failed:', error.message);
-    return res.status(503).json({
+    console.warn('[History Controller Warning] getHistoryById error:', error.message);
+    return res.status(500).json({
       success: false,
-      message: 'Database operation failed',
+      message: 'Failed to retrieve record',
     });
   }
 };
@@ -104,24 +69,17 @@ export const getHistoryById = async (req, res, next) => {
  */
 export const deleteHistory = async (req, res, next) => {
   try {
-    if (!Prediction.db || Prediction.db.readyState !== 1) {
-      return res.status(200).json({
-        success: true,
-        message: 'Database not connected',
-      });
-    }
-
-    await Prediction.deleteMany({});
+    await clearAllPredictionRecords();
 
     return res.status(200).json({
       success: true,
       message: 'Prediction history cleared successfully',
     });
   } catch (error) {
-    console.warn('[MongoDB Warning] deleteHistory failed:', error.message);
-    return res.status(200).json({
-      success: true,
-      message: 'History clear skipped (Database unavailable)',
+    console.warn('[History Controller Warning] deleteHistory error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to clear prediction history',
     });
   }
 };
@@ -133,17 +91,10 @@ export const deleteHistory = async (req, res, next) => {
  */
 export const deleteHistoryItem = async (req, res, next) => {
   try {
-    if (!Prediction.db || Prediction.db.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        message: 'Database not connected',
-      });
-    }
-
     const { id } = req.params;
-    const record = await Prediction.findByIdAndDelete(id);
+    const deleted = await deletePredictionRecordById(id);
 
-    if (!record) {
+    if (!deleted) {
       return res.status(404).json({
         success: false,
         message: 'Prediction history record not found',
@@ -155,16 +106,11 @@ export const deleteHistoryItem = async (req, res, next) => {
       message: 'Prediction record deleted successfully',
     });
   } catch (error) {
-    if (error.kind === 'ObjectId') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid history record ID format',
-      });
-    }
-    console.warn('[MongoDB Warning] deleteHistoryItem failed:', error.message);
-    return res.status(503).json({
+    console.warn('[History Controller Warning] deleteHistoryItem error:', error.message);
+    return res.status(500).json({
       success: false,
-      message: 'Database operation failed',
+      message: 'Failed to delete record',
     });
   }
 };
+

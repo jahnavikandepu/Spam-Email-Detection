@@ -1,35 +1,43 @@
 import mongoose from 'mongoose';
 
-// Disable command buffering so queries fail fast if DB is disconnected
-mongoose.set('bufferCommands', false);
-
 /**
- * Connect to MongoDB instance safely (non-blocking for app execution)
+ * Connect to MongoDB instance safely with automatic local fallback
  */
 const connectDB = async () => {
-  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spamguard';
+  const primaryUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spamguard';
+  const localUri = 'mongodb://127.0.0.1:27017/spamguard';
 
+  // Try primary URI first
   try {
-    await mongoose.connect(mongoUri, {
+    console.log(`[MongoDB] Connecting to primary database...`);
+    await mongoose.connect(primaryUri, {
       dbName: 'spamguard',
-      serverSelectionTimeoutMS: 3000,
+      serverSelectionTimeoutMS: 2500,
+      connectTimeoutMS: 2500,
     });
     console.log('MongoDB connected successfully');
-  } catch (error) {
-    if (!mongoUri.includes('127.0.0.1') && !mongoUri.includes('localhost')) {
-      try {
-        await mongoose.connect('mongodb://127.0.0.1:27017/spamguard', {
-          dbName: 'spamguard',
-          serverSelectionTimeoutMS: 3000,
-        });
-        console.log('MongoDB connected successfully');
-        return;
-      } catch (localErr) {
-        console.warn(`[MongoDB Warning] Connection failed: ${error.message}. Backend running without DB persistence.`);
-      }
-    } else {
-      console.warn(`[MongoDB Warning] Connection failed: ${error.message}. Backend running without DB persistence.`);
+    return;
+  } catch (primaryErr) {
+    console.warn(`[MongoDB Warning] Primary connection failed: ${primaryErr.message}`);
+  }
+
+  // If primary was not local, try local MongoDB fallback
+  if (!primaryUri.includes('127.0.0.1') && !primaryUri.includes('localhost')) {
+    try {
+      console.log(`[MongoDB] Attempting fallback to local MongoDB at ${localUri}...`);
+      await mongoose.disconnect().catch(() => {});
+      await mongoose.connect(localUri, {
+        dbName: 'spamguard',
+        serverSelectionTimeoutMS: 2500,
+        connectTimeoutMS: 2500,
+      });
+      console.log('MongoDB connected successfully to local fallback');
+      return;
+    } catch (localErr) {
+      console.warn(`[MongoDB Warning] Local fallback failed: ${localErr.message}. Running with in-memory persistence fallback.`);
     }
+  } else {
+    console.warn(`[MongoDB Warning] Database unavailable. Running with in-memory persistence fallback.`);
   }
 };
 

@@ -1,5 +1,5 @@
-import Prediction from '../models/Prediction.js';
 import { getMlPrediction } from '../services/pythonMlService.js';
+import { savePredictionRecord } from '../services/historyStore.js';
 
 /**
  * @desc    Predict spam vs not_spam for email content using Python predict.py script
@@ -23,28 +23,18 @@ export const predictEmail = async (req, res, next) => {
     // 2. Call Python ML Service via child_process spawn
     const mlResult = await getMlPrediction(trimmedContent);
 
-    // 3. Format email preview for optional history listing
+    // 3. Format email preview for history listing
     const emailPreview = trimmedContent.length > 120
       ? trimmedContent.substring(0, 120) + '...'
       : trimmedContent;
 
-    // 4. Save prediction record to MongoDB if connected (isolated DB operations)
-    let savedRecord = null;
-    if (Prediction.db && Prediction.db.readyState === 1) {
-      try {
-        savedRecord = await Prediction.create({
-          emailContent: trimmedContent,
-          emailPreview,
-          prediction: mlResult.prediction,
-          confidence: mlResult.confidence,
-          createdAt: new Date(),
-        });
-      } catch (dbErr) {
-        console.warn('[MongoDB Warning] Could not save prediction record:', dbErr.message);
-      }
-    } else {
-      console.warn('[MongoDB Warning] Database not connected. Skipping prediction history storage.');
-    }
+    // 4. Save prediction record to persistent MongoDB and memory cache
+    const savedRecord = await savePredictionRecord({
+      emailContent: trimmedContent,
+      emailPreview,
+      prediction: mlResult.prediction,
+      confidence: mlResult.confidence,
+    });
 
     // 5. Return structured JSON response to React frontend
     const isSpam = mlResult.prediction === 'spam';
@@ -54,10 +44,11 @@ export const predictEmail = async (req, res, next) => {
       prediction: mlResult.prediction,
       confidence: mlResult.confidence,
       message: isSpam ? 'Spam email detected' : 'Email appears to be legitimate',
-      id: savedRecord ? savedRecord._id : null,
+      id: savedRecord ? (savedRecord._id || savedRecord.id) : null,
     });
 
   } catch (error) {
     next(error);
   }
 };
+

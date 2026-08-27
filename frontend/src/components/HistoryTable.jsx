@@ -239,13 +239,29 @@ export default function HistoryTable({ onSelectHistoryItem }) {
                       </td>
 
                       {/* Action */}
-                      <td className="py-4 px-4 whitespace-nowrap text-right">
+                      <td className="py-4 px-4 whitespace-nowrap text-right space-x-1.5">
                         <button
                           onClick={() => handleViewDetail(item)}
-                          className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
+                          className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
+                          title="View full email"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>View</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('Delete this record?')) return;
+                            try {
+                              await deleteHistoryItem(item.id);
+                              setHistoryList(prev => prev.filter(h => h.id !== item.id));
+                            } catch (err) {
+                              alert(`Failed to delete record: ${err.message}`);
+                            }
+                          }}
+                          className="inline-flex items-center p-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Delete record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </td>
 
