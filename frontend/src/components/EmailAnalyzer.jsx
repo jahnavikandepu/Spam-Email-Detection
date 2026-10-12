@@ -119,10 +119,10 @@ const EmailAnalyzer = forwardRef(({
               disabled={isEmpty || isLoading}
               className={`w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 shadow-md ${
                 isEmpty
-                  ? 'bg-slate-300 cursor-not-allowed shadow-none'
+                  ? 'bg-gradient-to-r from-brand-600 to-purpleBrand-600 opacity-40 cursor-not-allowed shadow-none'
                   : isLoading
                   ? 'bg-brand-600 opacity-90 cursor-wait'
-                  : 'bg-gradient-to-r from-brand-600 to-purpleBrand-600 hover:from-brand-700 hover:to-purpleBrand-700 hover:shadow-brand-500/25 active:scale-95'
+                  : 'bg-gradient-to-r from-brand-600 to-purpleBrand-600 hover:from-brand-700 hover:to-purpleBrand-700 shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 active:scale-95'
               }`}
             >
               {isLoading ? (

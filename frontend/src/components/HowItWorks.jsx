@@ -7,7 +7,7 @@ export default function HowItWorks() {
       number: '01',
       title: 'Enter Email',
       description: 'Paste the email body, header, or message content into the analysis area.',
-      icon: <FileText className="w-6 h-6 text-brand-600" />,
+      icon: <FileText className="w-6 h-6 text-emerald-600" />,
     },
     {
       number: '02',
@@ -28,7 +28,7 @@ export default function HowItWorks() {
       
       {/* Section Title */}
       <div className="text-center mb-12">
-        <span className="text-xs font-bold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
+        <span className="text-xs font-bold text-brand-700 uppercase tracking-widest bg-brand-50 px-3 py-1 rounded-full border border-brand-100 shadow-sm">
           Simple Workflow
         </span>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
@@ -67,9 +67,8 @@ export default function HowItWorks() {
               </p>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-brand-600 font-semibold">
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center text-xs text-brand-600 font-semibold">
               <span>Step {step.number} of 03</span>
-              <span>→</span>
             </div>
           </div>
         ))}

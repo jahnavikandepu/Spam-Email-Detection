@@ -7,32 +7,106 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Primary: Deep teal (#123C38)
         brand: {
-          50: '#f0f3ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-          950: '#1e1b4b',
+          50: '#F0FDF9',
+          100: '#D1FAE5', // Soft mint (#D1FAE5)
+          200: '#A7F3D0',
+          300: '#5EEAD4',
+          400: '#2DD4BF',
+          500: '#1B544E',
+          600: '#123C38', // Primary Deep teal (#123C38)
+          700: '#0E2F2C', // Deep teal hover
+          800: '#0A2220',
+          900: '#071816',
+          950: '#030E0D',
         },
+        // Accent: Emerald green (#10B981) & Secondary accent: Soft mint (#D1FAE5)
         purpleBrand: {
-          50: '#fcf5ff',
-          100: '#f3e8ff',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7e22ce',
+          50: '#ECFDF5',
+          100: '#D1FAE5', // Soft mint (#D1FAE5)
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981', // Accent Emerald green (#10B981)
+          600: '#10B981', // Accent Emerald green (#10B981)
+          700: '#059669', // Emerald green hover
+          800: '#047857',
+          900: '#065F46',
+        },
+        // Slate palette: Off-white page bg (#F5F7F6), Light gray borders (#E5E7EB),
+        // Slate gray secondary text (#64748B), Charcoal primary text (#1F2937)
+        slate: {
+          50: '#F5F7F6',  // Page background: Off-white (#F5F7F6)
+          100: '#EFF2F1',
+          200: '#E5E7EB', // Borders: Light gray (#E5E7EB)
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B', // Secondary text: Slate gray (#64748B)
+          600: '#64748B', // Secondary text: Slate gray (#64748B)
+          700: '#374151',
+          800: '#1F2937', // Primary text: Charcoal (#1F2937)
+          900: '#1F2937', // Primary text: Charcoal (#1F2937)
+          950: '#111827',
+        },
+        // Success status: Green (#15803D), Accent: Emerald green (#10B981)
+        emerald: {
+          50: '#ECFDF5',
+          100: '#D1FAE5', // Soft mint (#D1FAE5)
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981', // Accent Emerald green (#10B981)
+          600: '#10B981', // Accent Emerald green (#10B981)
+          700: '#15803D', // Success status: Green (#15803D)
+          800: '#166534',
+          900: '#14532D',
+        },
+        // Teal scale matching primary Deep teal (#123C38)
+        teal: {
+          50: '#F0FDF9',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#5EEAD4',
+          400: '#2DD4BF',
+          500: '#144641',
+          600: '#123C38', // Deep teal (#123C38)
+          700: '#0E2F2C',
+          800: '#0A2220',
+          900: '#071816',
+        },
+        // Spam / error status: Red (#DC2626)
+        rose: {
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          200: '#FECACA',
+          300: '#FCA5A5',
+          400: '#F87171',
+          500: '#EF4444',
+          600: '#DC2626', // Spam/error status: Red (#DC2626)
+          700: '#B91C1C',
+          800: '#991B1B',
+          900: '#7F1D1D',
+        },
+        red: {
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          200: '#FECACA',
+          300: '#FCA5A5',
+          400: '#F87171',
+          500: '#EF4444',
+          600: '#DC2626', // Red (#DC2626)
+          700: '#B91C1C',
+          800: '#991B1B',
+          900: '#7F1D1D',
         }
       },
       boxShadow: {
-        'soft': '0 10px 30px -5px rgba(99, 102, 241, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
-        'glow-indigo': '0 0 25px -5px rgba(79, 70, 229, 0.3)',
-        'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.3)',
-        'glow-rose': '0 0 25px -5px rgba(225, 29, 72, 0.3)',
+        'soft': '0 10px 30px -5px rgba(18, 60, 56, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
+        'glow-teal': '0 0 25px -5px rgba(18, 60, 56, 0.25)',
+        'glow-indigo': '0 0 25px -5px rgba(18, 60, 56, 0.25)',
+        'glow-emerald': '0 0 25px -5px rgba(16, 185, 129, 0.35)',
+        'glow-rose': '0 0 25px -5px rgba(220, 38, 38, 0.35)',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out forwards',

@@ -128,7 +128,7 @@ export default function HistoryTable({ onSelectHistoryItem }) {
               onClick={() => setFilterType('all')}
               className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg transition-all ${
                 filterType === 'all' 
-                  ? 'bg-white text-slate-900 shadow-sm' 
+                  ? 'bg-brand-50 text-brand-700 font-bold shadow-sm' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -138,7 +138,7 @@ export default function HistoryTable({ onSelectHistoryItem }) {
               onClick={() => setFilterType('spam')}
               className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg transition-all ${
                 filterType === 'spam' 
-                  ? 'bg-rose-600 text-white shadow-sm' 
+                  ? 'bg-rose-600 text-white font-bold shadow-sm' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -148,7 +148,7 @@ export default function HistoryTable({ onSelectHistoryItem }) {
               onClick={() => setFilterType('not_spam')}
               className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg transition-all ${
                 filterType === 'not_spam' 
-                  ? 'bg-emerald-600 text-white shadow-sm' 
+                  ? 'bg-gradient-to-r from-brand-600 to-purpleBrand-600 text-white font-bold shadow-sm' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -242,7 +242,7 @@ export default function HistoryTable({ onSelectHistoryItem }) {
                       <td className="py-4 px-4 whitespace-nowrap text-right space-x-1.5">
                         <button
                           onClick={() => handleViewDetail(item)}
-                          className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 transition-colors"
+                          className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
                           title="View full email"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -319,7 +319,7 @@ export default function HistoryTable({ onSelectHistoryItem }) {
                     onSelectHistoryItem(selectedItem.fullText || selectedItem.emailPreview);
                     setSelectedItem(null);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-purpleBrand-600 hover:from-brand-700 hover:to-purpleBrand-700 shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 transition-all active:scale-95"
                 >
                   Load in Analyzer
                 </button>

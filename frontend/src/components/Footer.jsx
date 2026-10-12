@@ -11,7 +11,7 @@ export default function Footer({ setActivePage }) {
           {/* Col 1: Brand Info */}
           <div className="md:col-span-2">
             <div className="flex items-center space-x-2.5 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-600 via-brand-500 to-purpleBrand-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-brand-500/20">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <span className="font-bold text-lg text-slate-900 tracking-tight">SpamGuard AI</span>

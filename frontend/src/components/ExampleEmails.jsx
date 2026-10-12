@@ -45,7 +45,7 @@ export default function ExampleEmails({ onSelectExample }) {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 item.type === 'spam' 
                   ? 'bg-rose-50 text-rose-700 border border-rose-100' 
-                  : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                  : 'bg-brand-50 text-brand-700 border border-brand-100'
               }`}>
                 {item.badge}
               </span>
@@ -55,7 +55,7 @@ export default function ExampleEmails({ onSelectExample }) {
               "{item.content.replace(/\n+/g, ' ')}"
             </p>
 
-            <span className="mt-3 text-[11px] font-semibold text-brand-600 group-hover:underline inline-flex items-center space-x-1">
+            <span className="mt-3 text-[11px] font-semibold text-brand-700 group-hover:text-purpleBrand-600 group-hover:underline inline-flex items-center space-x-1">
               <span>Load Into Textarea</span>
               <span>→</span>
             </span>

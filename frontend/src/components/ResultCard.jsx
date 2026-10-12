@@ -34,7 +34,7 @@ export default function ResultCard({ result, onReset }) {
               className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transform transition-transform hover:scale-105 ${
                 isSpam 
                   ? 'bg-gradient-to-tr from-rose-600 to-red-500 shadow-rose-500/30' 
-                  : 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/30'
+                  : 'bg-gradient-to-tr from-brand-600 via-brand-500 to-purpleBrand-600 shadow-brand-500/30'
               }`}
             >
               {isSpam ? (
@@ -105,7 +105,7 @@ export default function ResultCard({ result, onReset }) {
             <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200">
               <div 
                 className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                  isSpam ? 'bg-gradient-to-r from-amber-500 to-rose-600' : 'bg-gradient-to-r from-teal-500 to-emerald-600'
+                  isSpam ? 'bg-gradient-to-r from-amber-500 to-rose-600' : 'bg-gradient-to-r from-brand-600 to-purpleBrand-600'
                 }`}
                 style={{ width: `${confidencePercent}%` }}
               />
